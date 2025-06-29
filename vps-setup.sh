@@ -47,6 +47,12 @@ ufw --force enable
 
 apt install -y unattended-upgrades
 systemctl enable --now unattended-upgrades
+dpkg-reconfigure -f noninteractive unattended-upgrades
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/51-auto-reboot <<EOF
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "03:00";
+EOF
 
 ### === CrowdSec === ###
 if ! command -v crowdsec &>/dev/null; then
