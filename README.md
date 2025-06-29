@@ -5,7 +5,7 @@ Automatisiertes Setup für sichere Debian/Ubuntu-VPS inklusive WireGuard, NetBir
 ## Verwendung
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/<DEIN-GITHUB-USER>/secure-vps-setup/main/vps-setup.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/secure-homelabs/secure-vps-setup/main/vps-setup.sh)"
 ```
 
 ## Lizenz
