@@ -44,7 +44,7 @@ sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 sed -i "s/^#Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config || echo "Port $SSH_PORT" >> /etc/ssh/sshd_config
 sed -i "s/^Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config || echo "Port $SSH_PORT" >> /etc/ssh/sshd_config
-systemctl reload sshd
+systemctl reload ssh.service
 
 ufw allow $SSH_PORT/tcp
 ufw --force enable
@@ -84,8 +84,11 @@ Standort=$VPS_LOCATION
 EOF
 
 ### === MOTD + Root-Warnung === ###
-log "MOTD wird eingerichtet..."
-echo -e "\n\e[33m⚠️  Warnung: Du bist als root eingeloggt.\e[0m\n" > /etc/motd
+if [[ "$USER" == "root" ]]; then
+  echo -e "\n\e[33m⚠️  Warnung: Du bist als root eingeloggt.\e[0m\n" > /etc/motd
+else
+  > /etc/motd
+fi
 
 cat > /etc/update-motd.d/10-premium-motd <<'EOF'
 #!/bin/bash
@@ -147,9 +150,10 @@ chmod +x /etc/profile.d/ssh-discord-alert.sh
 ### === VPN Auswahl === ###
 echo "VPN-Setup wählen:
 1) Klassisches WireGuard
-2) NetBird Agent (Overlay VPN)
-3) Überspringen"
-read -rp "Auswahl (1/2/3): " VPN_CHOICE
+2) Headscale (Tailscale-kompatibel)
+3) NetBird Agent (Overlay VPN)
+4) Überspringen"
+read -rp "Auswahl (1/2/3/4): " VPN_CHOICE
 
 if [[ "$VPN_CHOICE" == "1" ]]; then
   log "WireGuard wird installiert..."
@@ -192,6 +196,13 @@ CONF
   echo "--- Ende ---\n"
 
 elif [[ "$VPN_CHOICE" == "2" ]]; then
+  log "Headscale (Tailscale-kompatibel) wird installiert..."
+  curl -fsSL https://tailscale.com/install.sh | sh
+  read -rp "Headscale Server URL (z. B. https://headscale.example.com): " HEADSCALE_URL
+  read -rp "Headscale Auth-Key: " HEADSCALE_AUTHKEY
+  tailscale up --login-server="$HEADSCALE_URL" --authkey "$HEADSCALE_AUTHKEY" --hostname "$VPS_NAME"
+
+elif [[ "$VPN_CHOICE" == "3" ]]; then
   log "NetBird wird installiert..."
   curl -fsSL https://pkgs.netbird.io/install.sh | bash
   read -rp "NetBird Setup Key: " NETBIRD_SETUP_KEY
@@ -201,4 +212,12 @@ elif [[ "$VPN_CHOICE" == "2" ]]; then
   netbird status
 fi
 
+### === Beszel Monitoring Client (optional) === ###
+read -rp "Beszel Server Hostname (leer lassen zum Überspringen): " BESZEL_HOST
+if [[ -n "$BESZEL_HOST" ]]; then
+  log "Beszel Monitoring Client wird eingerichtet..."
+  curl -sL "https://$BESZEL_HOST/client.sh" | bash -s -- -s "$BESZEL_HOST"
+fi
+
 log "Setup abgeschlossen ✅. Du kannst dich nun mit $NEW_USERNAME einloggen."
+log "Bitte starte mit systemctl restart crowdsec.service CrowdSec neu, um die Konfiguration zu laden."
