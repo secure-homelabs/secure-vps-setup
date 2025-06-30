@@ -24,7 +24,7 @@ err() { echo -e "\e[31m[ERROR]\e[0m $*" >&2; exit 1; }
 ### === System vorbereiten === ###
 log "System wird aktualisiert..."
 apt update && apt -y upgrade
-apt install -y sudo curl gnupg ufw software-properties-common neofetch lsb-release lscpu
+apt install -y sudo curl gnupg ufw software-properties-common neofetch lsb-release
 
 ### === Benutzer + SSH === ###
 if ! id "$NEW_USERNAME" &>/dev/null; then
