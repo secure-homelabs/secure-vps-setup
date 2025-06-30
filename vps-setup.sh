@@ -27,6 +27,8 @@ apt update && apt -y upgrade
 apt install -y sudo curl gnupg ufw software-properties-common neofetch lsb-release
 
 ### === Benutzer + SSH === ###
+read -rp "Alternative SSH-Portnummer (Standard 22): " SSH_PORT
+SSH_PORT=${SSH_PORT:-22}
 if ! id "$NEW_USERNAME" &>/dev/null; then
   log "Benutzer '$NEW_USERNAME' wird erstellt..."
   adduser --disabled-password --gecos "" "$NEW_USERNAME"
@@ -40,9 +42,11 @@ chown -R $NEW_USERNAME:$NEW_USERNAME /home/$NEW_USERNAME/.ssh
 
 sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i "s/^#Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config || echo "Port $SSH_PORT" >> /etc/ssh/sshd_config
+sed -i "s/^Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config || echo "Port $SSH_PORT" >> /etc/ssh/sshd_config
 systemctl reload sshd
 
-ufw allow OpenSSH
+ufw allow $SSH_PORT/tcp
 ufw --force enable
 
 apt install -y unattended-upgrades
