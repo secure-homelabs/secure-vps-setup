@@ -136,15 +136,18 @@ done
 
 ### === SSH Login Benachrichtigung (Discord) === ###
 log "SSH Login-Benachrichtigung via Discord aktivieren..."
-cat > /etc/profile.d/ssh-discord-alert.sh <<EOF
+cat > /etc/profile.d/ssh-discord-alert.sh <<'EOF'
 #!/bin/bash
-if [[ -n "\$SSH_CONNECTION" ]]; then
-  HOSTNAME=\$(hostname)
-  IP=\$(echo "\${SSH_CONNECTION:-}" | awk '{print \$1}')
-  USER=\$(whoami)
-  curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"🔐 SSH Login auf \\$HOSTNAME durch Benutzer \\$USER von IP \\$IP\"}" "$DISCORD_WEBHOOK_URL" >/dev/null 2>&1 || true
+if [[ -n "$SSH_CONNECTION" ]]; then
+  HOSTNAME=$(hostname)
+  IP=$(echo "${SSH_CONNECTION:-}" | awk '{print $1}')
+  USER=$(whoami)
+  curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"🔐 SSH Login auf $HOSTNAME durch Benutzer $USER von IP $IP\"}" "WEBHOOK_URL_PLACEHOLDER" >/dev/null 2>&1 || true
 fi
 EOF
+
+# Webhook dynamisch einsetzen
+sed -i "s|WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /etc/profile.d/ssh-discord-alert.sh
 chmod +x /etc/profile.d/ssh-discord-alert.sh
 
 ### === VPN Auswahl === ###
